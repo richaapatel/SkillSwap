@@ -4,6 +4,7 @@ const authRoutes = require('./routes/authRoutes');
 const skillRoutes = require('./routes/skillRoutes');
 const userRoutes = require('./routes/userRoutes');
 const exchangeRoutes = require('./routes/exchangeRoutes');
+const matchRoutes = require('./routes/matchRoutes');
 
 const app = express();
 
@@ -21,6 +22,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/exchanges', exchangeRoutes);
+app.use('/api/matches', matchRoutes);
 
 module.exports = app;
-
