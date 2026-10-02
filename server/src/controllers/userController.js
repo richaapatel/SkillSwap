@@ -2,6 +2,131 @@ const User = require('../models/User');
 const Skill = require('../models/Skill');
 const mongoose = require('mongoose');
 
+// @desc    Get authenticated user's profile
+// @route   GET /api/users/me
+const getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password')
+      .populate('skillsOffered', 'name description category')
+      .populate('skillsWanted', 'name description category');
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// @desc    Update authenticated user's profile
+// @route   PUT /api/users/me
+const updateMyProfile = async (req, res) => {
+  try {
+    const { name, bio } = req.body;
+
+    const updateFields = {};
+    if (name !== undefined) updateFields.name = name;
+    if (bio !== undefined) updateFields.bio = bio;
+
+    const user = await User.findByIdAndUpdate(req.user._id, updateFields, {
+      new: true,
+      runValidators: true,
+    })
+      .select('-password')
+      .populate('skillsOffered', 'name description category')
+      .populate('skillsWanted', 'name description category');
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// @desc    Get a user's public profile by ID
+// @route   GET /api/users/:userId
+const getUserById = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) {
+      return res.status(400).json({ message: 'Invalid user ID.' });
+    }
+
+    const user = await User.findById(req.params.userId)
+      .select('-password -email')
+      .populate('skillsOffered', 'name description category')
+      .populate('skillsWanted', 'name description category');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// @desc    Discover users with optional filters, search, and pagination
+// @route   GET /api/users
+const getUsers = async (req, res) => {
+  try {
+    const filter = {};
+
+    // Exclude current user if authenticated
+    if (req.user) {
+      filter._id = { $ne: req.user._id };
+    }
+
+    // Search by name
+    if (req.query.search) {
+      filter.name = new RegExp(req.query.search, 'i');
+    }
+
+    // Filter by offered skill
+    if (req.query.offeredSkill) {
+      if (!mongoose.Types.ObjectId.isValid(req.query.offeredSkill)) {
+        return res.status(400).json({ message: 'Invalid offeredSkill ID.' });
+      }
+      filter.skillsOffered = req.query.offeredSkill;
+    }
+
+    // Filter by wanted skill
+    if (req.query.wantedSkill) {
+      if (!mongoose.Types.ObjectId.isValid(req.query.wantedSkill)) {
+        return res.status(400).json({ message: 'Invalid wantedSkill ID.' });
+      }
+      filter.skillsWanted = req.query.wantedSkill;
+    }
+
+    // Pagination
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 1;
+    if (limit > 50) limit = 50;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments(filter);
+
+    const users = await User.find(filter)
+      .select('-password -email')
+      .populate('skillsOffered', 'name description category')
+      .populate('skillsWanted', 'name description category')
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
 // @desc    Get authenticated user's offered and wanted skills
 // @route   GET /api/users/me/skills
 const getMySkills = async (req, res) => {
@@ -146,9 +271,14 @@ const removeWantedSkill = async (req, res) => {
 };
 
 module.exports = {
+  getMyProfile,
+  updateMyProfile,
+  getUserById,
+  getUsers,
   getMySkills,
   addOfferedSkill,
   removeOfferedSkill,
   addWantedSkill,
   removeWantedSkill,
 };
+

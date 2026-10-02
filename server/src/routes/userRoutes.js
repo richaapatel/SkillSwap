@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getMyProfile,
+  updateMyProfile,
+  getUserById,
+  getUsers,
   getMySkills,
   addOfferedSkill,
   removeOfferedSkill,
@@ -8,16 +12,24 @@ const {
   removeWantedSkill,
 } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
+const optionalAuth = require('../middleware/optionalAuth');
 
-// All user skill routes require authentication
-router.use(authMiddleware);
+// Public routes (with optional auth for user exclusion)
+router.get('/', optionalAuth, getUsers);
 
-router.get('/me/skills', getMySkills);
+// Authenticated /me routes (must be defined before /:userId)
+router.get('/me', authMiddleware, getMyProfile);
+router.put('/me', authMiddleware, updateMyProfile);
+router.get('/me/skills', authMiddleware, getMySkills);
 
-router.post('/me/skills/offered/:skillId', addOfferedSkill);
-router.delete('/me/skills/offered/:skillId', removeOfferedSkill);
+router.post('/me/skills/offered/:skillId', authMiddleware, addOfferedSkill);
+router.delete('/me/skills/offered/:skillId', authMiddleware, removeOfferedSkill);
 
-router.post('/me/skills/wanted/:skillId', addWantedSkill);
-router.delete('/me/skills/wanted/:skillId', removeWantedSkill);
+router.post('/me/skills/wanted/:skillId', authMiddleware, addWantedSkill);
+router.delete('/me/skills/wanted/:skillId', authMiddleware, removeWantedSkill);
+
+// Public user profile by ID (must be after /me routes)
+router.get('/:userId', getUserById);
 
 module.exports = router;
+
