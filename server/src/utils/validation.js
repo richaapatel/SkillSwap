@@ -4,6 +4,32 @@ const isNonEmptyString = (value) => typeof value === 'string' && value.trim().le
 
 const isValidEmail = (value) => typeof value === 'string' && emailPattern.test(value.trim());
 
+const getPasswordValidationErrors = (value) => {
+  const password = typeof value === 'string' ? value : '';
+  const errors = [];
+
+  if (password.length < 8) {
+    errors.push('Use at least 8 characters.');
+  }
+  if (password.length > 128) {
+    errors.push('Use 128 characters or fewer.');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Add at least one uppercase letter.');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('Add at least one lowercase letter.');
+  }
+  if (!/\d/.test(password)) {
+    errors.push('Add at least one number.');
+  }
+  if (!/[^A-Za-z0-9\s]/.test(password)) {
+    errors.push('Add at least one special character.');
+  }
+
+  return errors;
+};
+
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const parsePagination = (query, defaults = {}) => {
@@ -54,6 +80,7 @@ const getDatabaseError = (error, fallback = 'Server error.') => {
 module.exports = {
   escapeRegex,
   getDatabaseError,
+  getPasswordValidationErrors,
   isNonEmptyString,
   isValidEmail,
   parsePagination,

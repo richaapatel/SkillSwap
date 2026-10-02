@@ -2,6 +2,18 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const passwordRequirements = [
+  { key: 'length', label: 'At least 8 characters', test: (value) => value.length >= 8 },
+  { key: 'uppercase', label: 'At least one uppercase letter', test: (value) => /[A-Z]/.test(value) },
+  { key: 'lowercase', label: 'At least one lowercase letter', test: (value) => /[a-z]/.test(value) },
+  { key: 'number', label: 'At least one number', test: (value) => /\d/.test(value) },
+  { key: 'special', label: 'At least one special character', test: (value) => /[^A-Za-z0-9\s]/.test(value) },
+];
+
+const getPasswordErrors = (value) => passwordRequirements
+  .filter((requirement) => !requirement.test(value))
+  .map((requirement) => requirement.label);
+
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,8 +46,14 @@ const Register = () => {
       return;
     }
 
-    if (password.length < 6 || password.length > 128) {
-      setError('Password must be between 6 and 128 characters.');
+    if (password.length > 128) {
+      setError('Password must be 128 characters or fewer.');
+      return;
+    }
+
+    const passwordErrors = getPasswordErrors(password);
+    if (passwordErrors.length > 0) {
+      setError(`Password requirements not met: ${passwordErrors.join(', ')}.`);
       return;
     }
 
@@ -105,13 +123,24 @@ const Register = () => {
               id="register-password"
               type="password"
               className="form-control"
-              placeholder="At least 6 characters"
+              placeholder="Create a strong password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               autoComplete="new-password"
               required
             />
+            <ul className="list-unstyled form-text mb-0" aria-label="Password requirements">
+              {passwordRequirements.map((requirement) => {
+                const meetsRequirement = requirement.test(password);
+                return (
+                  <li key={requirement.key} className={meetsRequirement ? 'text-success' : ''}>
+                    <i className={`bi ${meetsRequirement ? 'bi-check-circle' : 'bi-circle'} me-1`} aria-hidden="true"></i>
+                    {requirement.label}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           <div className="mb-4">

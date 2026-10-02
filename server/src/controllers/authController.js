@@ -3,6 +3,7 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const {
   getDatabaseError,
+  getPasswordValidationErrors,
   isNonEmptyString,
   isValidEmail,
 } = require('../utils/validation');
@@ -26,8 +27,11 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Please provide a valid email address.' });
     }
 
-    if (password.length < 6 || password.length > 128) {
-      return res.status(400).json({ message: 'Password must be between 6 and 128 characters.' });
+    const passwordErrors = getPasswordValidationErrors(password);
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({
+        message: `Password requirements not met: ${passwordErrors.join(' ')}`,
+      });
     }
 
     const normalizedName = name.trim();

@@ -216,7 +216,7 @@ const addOfferedSkill = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    if (user.skillsOffered.includes(req.params.skillId)) {
+    if (user.skillsOffered.some((id) => id.toString() === req.params.skillId)) {
       return res.status(409).json({ message: 'Skill already in your offered list.' });
     }
 
@@ -289,7 +289,7 @@ const addWantedSkill = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    if (user.skillsWanted.includes(req.params.skillId)) {
+    if (user.skillsWanted.some((id) => id.toString() === req.params.skillId)) {
       return res.status(409).json({ message: 'Skill already in your wanted list.' });
     }
 

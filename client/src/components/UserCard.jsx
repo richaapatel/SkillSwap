@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import SkillBadge from './SkillBadge';
+import ExchangeRequestModal from './ExchangeRequestModal';
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -12,12 +15,16 @@ const getInitials = (name) => {
 };
 
 const UserCard = ({ user }) => {
+  const { user: currentUser, token } = useAuth();
   const offered = user.skillsOffered || [];
   const wanted = user.skillsWanted || [];
+  const [requestOpen, setRequestOpen] = useState(false);
+  const canRequest = currentUser && currentUser._id !== user._id && offered.length > 0;
 
   return (
-    <article className="user-card card h-100">
-      <div className="card-body d-flex flex-column">
+    <>
+      <article className="user-card card h-100">
+        <div className="card-body d-flex flex-column">
         <div className="user-card-header">
           <div className="user-avatar" aria-hidden="true">{getInitials(user.name)}</div>
           <div className="min-w-0">
@@ -60,12 +67,33 @@ const UserCard = ({ user }) => {
           )}
         </div>
 
-        <Link to={`/users/${user._id}`} className="btn btn-outline-primary btn-sm w-100 mt-auto">
-          View profile
-          <i className="bi bi-arrow-right ms-2" aria-hidden="true"></i>
-        </Link>
-      </div>
-    </article>
+        <div className="d-flex flex-column gap-2 mt-auto">
+          <Link to={`/users/${user._id}`} className="btn btn-outline-primary btn-sm w-100">
+            View profile
+            <i className="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+          </Link>
+          {canRequest ? (
+            <button type="button" className="btn btn-primary btn-sm w-100" onClick={() => setRequestOpen(true)}>
+              <i className="bi bi-send me-2" aria-hidden="true"></i>
+              Request to learn
+            </button>
+          ) : !currentUser ? (
+            <Link to="/login" className="btn btn-link btn-sm">Log in to request</Link>
+          ) : offered.length === 0 ? (
+            <span className="text-muted small text-center">No offered skills to request</span>
+          ) : null}
+        </div>
+        </div>
+      </article>
+      {requestOpen && (
+        <ExchangeRequestModal
+          teacher={user}
+          skills={offered}
+          token={token}
+          onClose={() => setRequestOpen(false)}
+        />
+      )}
+    </>
   );
 };
 
