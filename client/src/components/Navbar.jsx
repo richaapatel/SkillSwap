@@ -36,6 +36,15 @@ const Navbar = () => {
               <Link className="nav-link" to="/">Home</Link>
             </li>
 
+            {isAuthenticated && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/dashboard">
+                  <i className="bi bi-speedometer2 me-1"></i>
+                  Dashboard
+                </Link>
+              </li>
+            )}
+
             <li className="nav-item">
               <Link className="nav-link" to="/skills">
                 <i className="bi bi-grid-3x3-gap me-1"></i>
@@ -52,6 +61,12 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/exchanges">
+                    <i className="bi bi-arrow-left-right me-1"></i>
+                    Requests
+                  </Link>
+                </li>
                 <li className="nav-item">
                   <Link className="nav-link" to="/profile">
                     <i className="bi bi-person-circle me-1"></i>

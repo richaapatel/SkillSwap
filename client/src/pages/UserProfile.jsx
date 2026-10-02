@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SkillBadge from '../components/SkillBadge';
+import ExchangeRequestModal from '../components/ExchangeRequestModal';
 import api from '../services/api';
 
 const getInitials = (name) => {
@@ -16,10 +17,11 @@ const getInitials = (name) => {
 
 const UserProfile = () => {
   const { userId } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [requestOpen, setRequestOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -74,10 +76,16 @@ const UserProfile = () => {
             <div className="profile-public-actions">
               {isOwnProfile ? (
                 <Link to="/profile" className="btn btn-outline-primary btn-sm">Edit your profile</Link>
-              ) : (
-                <button type="button" className="btn btn-primary btn-sm" disabled title="Exchange requests arrive in a future stage.">
+              ) : !currentUser ? (
+                <Link to="/login" className="btn btn-primary btn-sm">Log in to request</Link>
+              ) : offered.length > 0 ? (
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setRequestOpen(true)}>
                   <i className="bi bi-arrow-left-right me-2"></i>
-                  Request Skill Exchange — Coming Soon
+                  Request to learn
+                </button>
+              ) : (
+                <button type="button" className="btn btn-outline-secondary btn-sm" disabled>
+                  No skills available to request
                 </button>
               )}
             </div>
@@ -99,8 +107,17 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {!isOwnProfile && <p className="profile-public-note mb-0"><i className="bi bi-info-circle me-2"></i>Exchange requests will be available in a future SkillSwap update.</p>}
+          {!isOwnProfile && <p className="profile-public-note mb-0"><i className="bi bi-info-circle me-2"></i>Choose an offered skill to send a request. The exchange can begin when the teacher accepts.</p>}
         </article>
+
+        {requestOpen && (
+          <ExchangeRequestModal
+            teacher={profile}
+            skills={offered}
+            token={token}
+            onClose={() => setRequestOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
