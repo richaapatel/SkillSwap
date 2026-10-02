@@ -1,16 +1,44 @@
-# React + Vite
+# SkillSwap
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SkillSwap is a web platform where users can register skills they can teach and skills they want to learn, with the goal of allowing users to discover and exchange knowledge.
 
-Currently, two official plugins are available:
+## Technology Stack
+- **Frontend**: React + Vite, Bootstrap
+- **Backend**: Node.js + Express
+- **Database**: MongoDB using Mongoose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Project Structure
+The project is divided into two main parts:
+- `client/`: Contains the React + Vite frontend application.
+- `server/`: Contains the Node.js + Express backend application.
 
-## React Compiler
+## How to Run
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Frontend (Client)
+1. Open a terminal and navigate to the `client` directory:
+   ```bash
+   cd client
+   ```
+2. Install dependencies (if not already installed):
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Backend (Server)
+1. Open a terminal and navigate to the `server` directory:
+   ```bash
+   cd server
+   ```
+2. Install dependencies (if not already installed):
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example` and add your `MONGO_URI`.
+4. Start the Express development server using nodemon:
+   ```bash
+   npm run dev
+   ```
