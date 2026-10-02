@@ -36,6 +36,20 @@ const Navbar = () => {
               <Link className="nav-link" to="/">Home</Link>
             </li>
 
+            <li className="nav-item">
+              <Link className="nav-link" to="/skills">
+                <i className="bi bi-grid-3x3-gap me-1"></i>
+                Skills
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link className="nav-link" to="/discover">
+                <i className="bi bi-compass me-1"></i>
+                Discover
+              </Link>
+            </li>
+
             {isAuthenticated ? (
               <>
                 <li className="nav-item">

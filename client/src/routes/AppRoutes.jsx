@@ -3,6 +3,9 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Profile from '../pages/Profile';
+import Skills from '../pages/Skills';
+import Discover from '../pages/Discover';
+import UserProfile from '../pages/UserProfile';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -11,6 +14,9 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/skills" element={<Skills />} />
+      <Route path="/discover" element={<Discover />} />
+      <Route path="/users/:userId" element={<UserProfile />} />
       <Route
         path="/profile"
         element={
