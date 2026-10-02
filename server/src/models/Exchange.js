@@ -31,4 +31,7 @@ const exchangeSchema = new mongoose.Schema(
   }
 );
 
+// Compound index for efficient duplicate-pending-request detection
+exchangeSchema.index({ learner: 1, teacher: 1, skill: 1, status: 1 });
+
 module.exports = mongoose.model('Exchange', exchangeSchema);
