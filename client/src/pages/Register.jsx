@@ -16,13 +16,26 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    if (!name || !email || !password || !confirmPassword) {
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim();
+
+    if (!normalizedName || !normalizedEmail || !password || !confirmPassword) {
       setError('Please fill in all fields.');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (normalizedName.length > 80) {
+      setError('Name must be 80 characters or fewer.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length < 6 || password.length > 128) {
+      setError('Password must be between 6 and 128 characters.');
       return;
     }
 
@@ -33,7 +46,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(normalizedName, normalizedEmail, password);
       navigate('/profile');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');

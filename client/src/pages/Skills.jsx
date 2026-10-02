@@ -127,6 +127,21 @@ const Skills = () => {
       return;
     }
 
+    if (name.length > 100) {
+      setCreateError('Skill name must be 100 characters or fewer.');
+      return;
+    }
+
+    if (createForm.description.trim().length > 500) {
+      setCreateError('Skill description must be 500 characters or fewer.');
+      return;
+    }
+
+    if (createForm.category.trim().length > 80) {
+      setCreateError('Skill category must be 80 characters or fewer.');
+      return;
+    }
+
     setCreating(true);
     try {
       const createdSkill = await api.post('/skills', {

@@ -9,55 +9,79 @@ const getHeaders = (token) => {
 };
 
 const handleResponse = async (response) => {
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    // Some successful responses may not contain a JSON body.
+  }
+
   if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong');
+    if (response.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('skillswap:unauthorized'));
+    }
+
+    const fallbackMessages = {
+      400: 'Please check the information you entered.',
+      403: 'You are not allowed to perform that action.',
+      404: 'The requested resource was not found.',
+      409: 'This request conflicts with existing information.',
+      500: 'The server could not complete that request.',
+    };
+    throw new Error(data?.message || fallbackMessages[response.status] || 'The request could not be completed.');
   }
   return data;
 };
 
+const request = async (endpoint, options) => {
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, options);
+    return handleResponse(response);
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Unable to reach SkillSwap right now. Please try again.', { cause: error });
+    }
+    throw error;
+  }
+};
+
 const api = {
   get: async (endpoint, token = null) => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    return request(endpoint, {
       method: 'GET',
       headers: getHeaders(token),
     });
-    return handleResponse(response);
   },
 
   post: async (endpoint, body, token = null) => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    return request(endpoint, {
       method: 'POST',
       headers: getHeaders(token),
       body: JSON.stringify(body),
     });
-    return handleResponse(response);
   },
 
   put: async (endpoint, body, token = null) => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    return request(endpoint, {
       method: 'PUT',
       headers: getHeaders(token),
       body: JSON.stringify(body),
     });
-    return handleResponse(response);
   },
 
   patch: async (endpoint, body, token = null) => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    return request(endpoint, {
       method: 'PATCH',
       headers: getHeaders(token),
       body: JSON.stringify(body),
     });
-    return handleResponse(response);
   },
 
   delete: async (endpoint, token = null) => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    return request(endpoint, {
       method: 'DELETE',
       headers: getHeaders(token),
     });
-    return handleResponse(response);
   },
 };
 

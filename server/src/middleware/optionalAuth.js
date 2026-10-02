@@ -6,11 +6,11 @@ const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !/^Bearer\s+\S+$/i.test(authHeader)) {
       return next();
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.replace(/^Bearer\s+/i, '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId).select('-password');
 

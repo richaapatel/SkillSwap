@@ -1,20 +1,40 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const {
+  getDatabaseError,
+  isNonEmptyString,
+  isValidEmail,
+} = require('../utils/validation');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const { name, email, password } = body;
 
-    // Validate required fields
-    if (!name || !email || !password) {
+    if (!isNonEmptyString(name) || !isNonEmptyString(email) || !isNonEmptyString(password)) {
       return res.status(400).json({ message: 'Please provide name, email, and password.' });
     }
 
+    if (name.trim().length > 80) {
+      return res.status(400).json({ message: 'Name must be 80 characters or fewer.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    }
+
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({ message: 'Password must be between 6 and 128 characters.' });
+    }
+
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json({ message: 'A user with this email already exists.' });
@@ -26,8 +46,8 @@ const register = async (req, res) => {
 
     // Create the user
     const user = await User.create({
-      name,
-      email,
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
@@ -38,7 +58,11 @@ const register = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: 'A user with this email already exists.' });
+    }
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -46,15 +70,19 @@ const register = async (req, res) => {
 // @route   POST /api/auth/login
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const { email, password } = body;
 
-    // Validate required fields
-    if (!email || !password) {
+    if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
       return res.status(400).json({ message: 'Please provide email and password.' });
     }
 
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    }
+
     // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password.' });
@@ -74,7 +102,8 @@ const login = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 

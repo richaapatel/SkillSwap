@@ -6,7 +6,7 @@ const getFriendlyError = (message) => {
   if (message.includes('already have a pending request')) return 'You already have a pending request for this skill with this person.';
   if (message.includes('yourself')) return 'You cannot request a skill exchange with yourself.';
   if (message.includes('does not offer')) return 'This person no longer offers that skill. Refresh the profile and try another skill.';
-  if (message.includes('Access denied') || message.includes('token') || message.includes('expired')) return 'Your session has expired. Please log in again.';
+  if (message.includes('Access denied') || message.includes('authorization') || message.includes('token') || message.includes('expired')) return 'Your session has expired. Please log in again.';
   if (message === 'Server error.') return 'The request could not be sent right now. Please try again shortly.';
   return message;
 };

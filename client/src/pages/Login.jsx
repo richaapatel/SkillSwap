@@ -14,14 +14,21 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail || !password) {
       setError('Please fill in all fields.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      await login(email, password);
+      await login(normalizedEmail, password);
       navigate('/profile');
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

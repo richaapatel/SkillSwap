@@ -1,3 +1,5 @@
+/* This module intentionally exports the provider and its paired hook. */
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -15,6 +17,18 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+      setLoading(false);
+    };
+
+    window.addEventListener('skillswap:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('skillswap:unauthorized', handleUnauthorized);
+  }, []);
 
   // On mount or token change, verify session
   useEffect(() => {

@@ -5,11 +5,15 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader) {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!/^Bearer\s+\S+$/i.test(authHeader)) {
+      return res.status(401).json({ message: 'Invalid authorization header.' });
+    }
+
+    const token = authHeader.replace(/^Bearer\s+/i, '');
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

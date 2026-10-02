@@ -42,6 +42,16 @@ const Profile = () => {
       return;
     }
 
+    if (editName.trim().length > 80) {
+      setSaveError('Name must be 80 characters or fewer.');
+      return;
+    }
+
+    if (editBio.trim().length > 500) {
+      setSaveError('Bio must be 500 characters or fewer.');
+      return;
+    }
+
     setSaving(true);
     try {
       const data = await api.put('/users/me', { name: editName.trim(), bio: editBio.trim() }, token);

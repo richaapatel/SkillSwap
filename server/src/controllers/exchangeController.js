@@ -2,46 +2,59 @@ const Exchange = require('../models/Exchange');
 const User = require('../models/User');
 const Skill = require('../models/Skill');
 const mongoose = require('mongoose');
+const { getDatabaseError, isNonEmptyString } = require('../utils/validation');
 
 // @desc    Create a new exchange request
 // @route   POST /api/exchanges
 const createExchange = async (req, res) => {
   try {
-    const { teacherId, skillId, message } = req.body;
+    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const { teacherId, skillId, message } = body;
 
     // Validate required fields
-    if (!teacherId || !skillId) {
+    if (!isNonEmptyString(teacherId) || !isNonEmptyString(skillId)) {
       return res.status(400).json({ message: 'teacherId and skillId are required.' });
     }
 
+    if (message !== undefined && typeof message !== 'string') {
+      return res.status(400).json({ message: 'Message must be text.' });
+    }
+
+    if (message && message.trim().length > 500) {
+      return res.status(400).json({ message: 'Message must be 500 characters or fewer.' });
+    }
+
+    const normalizedTeacherId = teacherId.trim();
+    const normalizedSkillId = skillId.trim();
+
     // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+    if (!mongoose.Types.ObjectId.isValid(normalizedTeacherId)) {
       return res.status(400).json({ message: 'Invalid teacher ID.' });
     }
-    if (!mongoose.Types.ObjectId.isValid(skillId)) {
+    if (!mongoose.Types.ObjectId.isValid(normalizedSkillId)) {
       return res.status(400).json({ message: 'Invalid skill ID.' });
     }
 
     // Prevent self-request
-    if (req.user._id.toString() === teacherId) {
+    if (req.user._id.toString() === normalizedTeacherId) {
       return res.status(400).json({ message: 'You cannot send an exchange request to yourself.' });
     }
 
     // Verify teacher exists
-    const teacher = await User.findById(teacherId);
+    const teacher = await User.findById(normalizedTeacherId);
     if (!teacher) {
       return res.status(404).json({ message: 'Teacher not found.' });
     }
 
     // Verify skill exists
-    const skill = await Skill.findById(skillId);
+    const skill = await Skill.findById(normalizedSkillId);
     if (!skill) {
       return res.status(404).json({ message: 'Skill not found.' });
     }
 
     // Verify teacher offers this skill
     const teacherOffersSkill = teacher.skillsOffered.some(
-      (id) => id.toString() === skillId
+      (id) => id.toString() === normalizedSkillId
     );
     if (!teacherOffersSkill) {
       return res.status(400).json({ message: 'This teacher does not offer the requested skill.' });
@@ -50,8 +63,8 @@ const createExchange = async (req, res) => {
     // Check for duplicate pending request
     const existingExchange = await Exchange.findOne({
       learner: req.user._id,
-      teacher: teacherId,
-      skill: skillId,
+      teacher: normalizedTeacherId,
+      skill: normalizedSkillId,
       status: 'pending',
     });
     if (existingExchange) {
@@ -61,9 +74,9 @@ const createExchange = async (req, res) => {
     // Create the exchange
     const exchange = await Exchange.create({
       learner: req.user._id,
-      teacher: teacherId,
-      skill: skillId,
-      message,
+      teacher: normalizedTeacherId,
+      skill: normalizedSkillId,
+      message: typeof message === 'string' ? message.trim() : undefined,
     });
 
     const populated = await Exchange.findById(exchange._id)
@@ -73,7 +86,8 @@ const createExchange = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -88,7 +102,8 @@ const getSentExchanges = async (req, res) => {
 
     res.status(200).json(exchanges);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -103,7 +118,8 @@ const getReceivedExchanges = async (req, res) => {
 
     res.status(200).json(exchanges);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -135,7 +151,8 @@ const getExchangeById = async (req, res) => {
 
     res.status(200).json(exchange);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -173,7 +190,8 @@ const acceptExchange = async (req, res) => {
 
     res.status(200).json(populated);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -211,7 +229,8 @@ const rejectExchange = async (req, res) => {
 
     res.status(200).json(populated);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
@@ -253,7 +272,8 @@ const completeExchange = async (req, res) => {
 
     res.status(200).json(populated);
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 

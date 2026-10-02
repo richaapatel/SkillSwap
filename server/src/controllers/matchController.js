@@ -1,18 +1,33 @@
 const User = require('../models/User');
 const Skill = require('../models/Skill');
 const mongoose = require('mongoose');
+const {
+  getDatabaseError,
+  isNonEmptyString,
+  parsePagination,
+} = require('../utils/validation');
 
 // @desc    Get skill matches for the authenticated user
 // @route   GET /api/matches
 const getMatches = async (req, res) => {
   try {
+    const pagination = parsePagination(req.query);
+    if (pagination.error) {
+      return res.status(400).json({ message: pagination.error });
+    }
+    const { page, limit } = pagination;
+
     // Get current user with skill arrays
     const currentUser = await User.findById(req.user._id);
+
+    if (!currentUser) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
     if (!currentUser.skillsWanted || currentUser.skillsWanted.length === 0) {
       return res.status(200).json({
         matches: [],
-        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        pagination: { page, limit, total: 0, totalPages: 0 },
       });
     }
 
@@ -23,7 +38,10 @@ const getMatches = async (req, res) => {
     // Optional skill filter
     let filterSkillIds = wantedIds;
 
-    if (req.query.skillId) {
+    if (req.query.skillId !== undefined) {
+      if (!isNonEmptyString(req.query.skillId)) {
+        return res.status(400).json({ message: 'Invalid skill ID.' });
+      }
       if (!mongoose.Types.ObjectId.isValid(req.query.skillId)) {
         return res.status(400).json({ message: 'Invalid skill ID.' });
       }
@@ -37,7 +55,7 @@ const getMatches = async (req, res) => {
       if (!wantedIds.includes(req.query.skillId)) {
         return res.status(200).json({
           matches: [],
-          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+          pagination: { page, limit, total: 0, totalPages: 0 },
         });
       }
 
@@ -83,13 +101,6 @@ const getMatches = async (req, res) => {
       return a.user.name.localeCompare(b.user.name);
     });
 
-    // Pagination
-    let page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    if (page < 1) page = 1;
-    if (limit < 1) limit = 1;
-    if (limit > 50) limit = 50;
-
     const total = matchResults.length;
     const totalPages = Math.ceil(total / limit);
     const start = (page - 1) * limit;
@@ -105,7 +116,8 @@ const getMatches = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error.' });
+    const databaseError = getDatabaseError(error);
+    return res.status(databaseError.status).json({ message: databaseError.message });
   }
 };
 
