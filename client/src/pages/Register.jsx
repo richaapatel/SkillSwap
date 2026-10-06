@@ -93,7 +93,7 @@ const Register = () => {
               id="register-name"
               type="text"
               className="form-control"
-              placeholder="John Doe"
+              placeholder="Your Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
